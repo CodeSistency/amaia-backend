@@ -17,7 +17,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage })
 
 
-router.route('/').get(productController.getAllProducts)
+router.route('/').get(productController.getAllProducts).post(productController.createNewProduct)
 
 router.get('/limited', productController.getLimitedProducts);
    
