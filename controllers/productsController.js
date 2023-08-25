@@ -11,17 +11,129 @@ const getAllProducts = async (req, res) => {
     res.json(product);
 }
 
+// const getLimitedProducts = async (req, res) => {
+//     const pageNumber = parseInt(req.query.pageNumber) || 1;
+//     const pageSize = 15;
+  
+//     try {
+//       const skip = (pageNumber - 1) * pageSize;
+  
+//       const products = await Product.find()
+//         .skip(skip)
+//         .limit(pageSize)
+//         .exec();
+  
+//       if (products.length === 0) {
+//         return res.status(204).json({ message: 'No products found.' });
+//       }
+  
+//       res.json(products);
+//     } catch (error) {
+//       console.error(error);
+//       res.status(500).json({ error: 'Internal Server Error' });
+//     }
+//   };
+const getSomeProducts = async (req, res) => {
+    const pageNumber = parseInt(req.query.pageNumber) || 1;
+    const pageSize = 40;
+    const searchQuery = req.query.search || '';
+  
+    try {
+      const skip = (pageNumber - 1) * pageSize;
+
+      // Create a regex pattern to perform case-insensitive search
+      const searchPattern = new RegExp(searchQuery, 'i');
+  
+      const products = await Product.aggregate([
+        {
+            $match: {
+              $or: [
+                { name: { $regex: searchPattern } }, // Match products by name
+                { codigo: { $regex: searchPattern } }, // Match products by code
+              ],
+            },
+          },
+        { $sample: { size: pageSize } }, // Randomly sample 'pageSize' number of products
+        { $skip: skip }, // Apply pagination
+        { $limit: pageSize }, // Limit the number of products per page
+      ]);
+  
+      if (products.length === 0) {
+        return res.status(204).json({ message: 'No products found.' });
+      }
+  
+      res.json(products);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  };
+
+
+//   const getLimitedProducts = async (req, res) => {
+//     const pageNumber = parseInt(req.query.pageNumber) || 1;
+//     const pageSize = 15;
+  
+//     try {
+//       const skip = (pageNumber - 1) * pageSize;
+  
+//       const products = await Product.aggregate([
+//         { $sample: { size: pageSize } }, // Randomly sample 'pageSize' number of products
+//         { $skip: skip }, // Apply pagination
+//         { $limit: pageSize }, // Limit the number of products per page
+//       ]);
+  
+//       if (products.length === 0) {
+//         return res.status(204).json({ message: 'No products found.' });
+//       }
+  
+//       res.json(products);
+//     } catch (error) {
+//       console.error(error);
+//       res.status(500).json({ error: 'Internal Server Error' });
+//     }
+//   };
+
 const getLimitedProducts = async (req, res) => {
     const pageNumber = parseInt(req.query.pageNumber) || 1;
     const pageSize = 15;
+    const searchQuery = req.query.search || '';
   
     try {
       const skip = (pageNumber - 1) * pageSize;
   
-      const products = await Product.find()
-        .skip(skip)
-        .limit(pageSize)
-        .exec();
+      // Create a regex pattern to perform case-insensitive search
+    //   const searchPattern = new RegExp(searchQuery, 'i');
+  
+      const products = await Product.aggregate([
+        // {
+        //   $match: {
+        //     $or: [
+        //       { name: { $regex: searchPattern } }, // Match products by name
+        //       { codigo: { $regex: searchPattern } }, // Match products by code
+        //     ],
+        //   },
+        // },
+        { $sample: { size: pageSize } }, // Randomly sample 'pageSize' number of products
+        { $skip: skip }, // Apply pagination
+        { $limit: pageSize }, // Limit the number of products per page
+      ]);
+  
+      if (products.length === 0) {
+        return res.status(204).json({ message: 'No products found.' });
+      }
+  
+      res.json(products);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  };
+  
+
+  const getAllRandomProducts = async (req, res) => {
+    try {
+      const products = await Product.aggregate([{ $sample: { size: 40 } }]); // Randomly sample 15 products
   
       if (products.length === 0) {
         return res.status(204).json({ message: 'No products found.' });
@@ -162,6 +274,47 @@ const getProduct = async (req, res) => {
     res.json(product);
 }
 
+async function updateComentario (req, res) {
+    // const { username, nombre, precio, precio_mayor, quantity } = req.body;
+    const { username, comentario, id } = req.body;
+    try {
+        
+        
+        console.log(username, comentario, id)
+        // console.log(JSON.parse(username))
+
+        const product = await Product.findOne({ _id: id });
+
+        if (!product) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Check if the cart item already exists in the user's cart
+      
+
+  
+            product.comentarios.push({
+                usuario: username,
+                comentario
+                
+            });
+        
+
+        await product.save();
+
+        return res.json({ message: 'Comentario updated successfully' });
+    } catch (error) {
+        console.error('Error:', error);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+}
+
+const getAllComentarios = async (req, res) => {
+    const product = await Product.find();
+    if (!product) return res.status(204).json({ 'message': 'No Comment found.' });
+    res.json(product.comentarios);
+}
+
 module.exports = {
     getAllProducts,
     getProductsByGender,
@@ -171,4 +324,8 @@ module.exports = {
     deleteProduct,
     getProduct,
     getLimitedProducts,
+    getAllRandomProducts,
+    getSomeProducts,
+    updateComentario,
+    getAllComentarios
 }
