@@ -11,28 +11,69 @@ const getAllProducts = async (req, res) => {
     res.json(product);
 }
 
-// const getLimitedProducts = async (req, res) => {
-//     const pageNumber = parseInt(req.query.pageNumber) || 1;
-//     const pageSize = 15;
-  
-//     try {
-//       const skip = (pageNumber - 1) * pageSize;
-  
-//       const products = await Product.find()
-//         .skip(skip)
-//         .limit(pageSize)
-//         .exec();
-  
-//       if (products.length === 0) {
-//         return res.status(204).json({ message: 'No products found.' });
-//       }
-  
-//       res.json(products);
-//     } catch (error) {
-//       console.error(error);
-//       res.status(500).json({ error: 'Internal Server Error' });
+const searchProducts = async (req, res) => {
+  const searchTerm = req.query.query;
+
+  try {
+    const products = await Product.find({ $titulo: { $search: searchTerm } });
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ error: 'An error occurred while searching for products.' });
+  }
+
+}
+
+// const searchProducts = async (req, res) => {
+//   const searchQuery = req.query.search || '';
+
+//   try {
+//     // Create a regex pattern to perform case-insensitive search
+//     const searchPattern = new RegExp(searchQuery, 'i');
+
+//     const query = {};
+
+//     // Add search condition
+//     query.$or = [
+//       { name: { $regex: searchPattern } }, // Match products by name
+//       { code: { $regex: searchPattern } }, // Match products by code
+//     ];
+
+//     const products = await Product.find(query);
+
+//     if (products.length === 0) {
+//       return res.status(204).json({ message: 'No products found.' });
 //     }
-//   };
+
+//     res.json(products);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// };
+
+const getQRProducts = async (req, res) => {
+    const pageNumber = parseInt(req.query.pageNumber) || 1;
+    const pageSize = 30;
+  
+    try {
+      const skip = (pageNumber - 1) * pageSize;
+  
+      const products = await Product.find()
+        .skip(skip)
+        .limit(pageSize)
+        .exec();
+  
+      if (products.length === 0) {
+        return res.status(204).json({ message: 'No products found.' });
+      }
+  
+      res.json(products);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  };
+
 const getSomeProducts = async (req, res) => {
     const pageNumber = parseInt(req.query.pageNumber) || 1;
     const pageSize = 40;
@@ -327,5 +368,7 @@ module.exports = {
     getAllRandomProducts,
     getSomeProducts,
     updateComentario,
-    getAllComentarios
+    getAllComentarios,
+    searchProducts,
+    getQRProducts
 }
